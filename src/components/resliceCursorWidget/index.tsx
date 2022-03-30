@@ -4,8 +4,8 @@ import styled from '@emotion/styled';
 // Load the rendering pieces we want to use (for both WebGL and WebGPU)
 import '@kitware/vtk.js/Rendering/Profiles/All';
 
-import vtkActor from '@kitware/vtk.js/Rendering/Core/Actor';
 import vtkGenericRenderWindow from '@kitware/vtk.js/Rendering/Misc/GenericRenderWindow';
+import vtkActor from '@kitware/vtk.js/Rendering/Core/Actor';
 import vtkImageMapper from '@kitware/vtk.js/Rendering/Core/ImageMapper';
 import vtkImageReslice from '@kitware/vtk.js/Imaging/Core/ImageReslice';
 import vtkImageSlice from '@kitware/vtk.js/Rendering/Core/ImageSlice';

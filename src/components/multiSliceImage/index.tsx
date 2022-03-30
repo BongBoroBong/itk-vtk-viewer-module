@@ -20,7 +20,7 @@ const obj: any = {
   GLWindow: grw.getOpenGLRenderWindow(),
 };
 
-const MultiSliceImage = ({ volume }: any) =>{
+const MultiSliceImage = ({ volume }: any) => {
   const sliceRef = useRef<HTMLDivElement>(null);
 
   const [sliceI, setSliceI] = useState(120);

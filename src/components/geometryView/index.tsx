@@ -10,14 +10,14 @@ import vtkGenericRenderWindow from '@kitware/vtk.js/Rendering/Misc/GenericRender
 import ITKHelper from '@kitware/vtk.js/Common/DataModel/ITKHelper';
 import vtkActor from '@kitware/vtk.js/Rendering/Core/Actor';
 import vtkMapper from '@kitware/vtk.js/Rendering/Core/Mapper';
-import vtkImageMarchingCubes from '@kitware/vtk.js/Filters/General/ImageMarchingCubes';
-import vtkColorTransferFunction from '@kitware/vtk.js/Rendering/Core/ColorTransferFunction';
+import vtkScalarBarActor from '@kitware/vtk.js/Rendering/Core/ScalarBarActor';
 import vtkColorMaps from '@kitware/vtk.js/Rendering/Core/ColorTransferFunction/ColorMaps';
-import { ROI_COLOR_LUT } from '../../variables/mock';
+import vtkColorTransferFunction from '@kitware/vtk.js/Rendering/Core/ColorTransferFunction';
+import { ControlBar } from './controlBar';
 
 const { convertItkToVtkImage } = ITKHelper;
 
-const VolumeContour = ({ volume }: any) => {
+const GeometryView = ({ volume }: any) => {
   const sliceRef = useRef<HTMLDivElement>(null);
 
   const setup = (refs: any) => {
@@ -43,40 +43,36 @@ const VolumeContour = ({ volume }: any) => {
     obj.renderWindow.addRenderer(obj.renderer);
     obj.renderWindow.addView(obj.GLWindow);
 
-    const dataRange = image.getPointData().getScalars().getRange();
-    const firstIsoValue = (dataRange[0] + dataRange[1]) / 2;
-
-    const mapper = vtkMapper.newInstance();
-    const actor = vtkActor.newInstance();
-
-    const marchingCube = vtkImageMarchingCubes.newInstance({
-      contourValue: firstIsoValue,
-      computeNormals: true,
-      mergePoints: true,
-    });
-
-    marchingCube.setInputData(image);
-    mapper.setInputConnection(marchingCube.getOutputPort());
-
     const lookupTable = vtkColorTransferFunction.newInstance();
 
-    lookupTable.applyColorMap(vtkColorMaps.getPresetByName('2hot'));
+    const mapper = vtkMapper.newInstance({
+      interpolateScalarsBeforeMapping: false,
+      useLookupTableScalarRange: true,
+      scalarVisibility: false,
+    });
+    const actor = vtkActor.newInstance();
 
-    for (let i = 0; i < ROI_COLOR_LUT.length; i++) {
-      const item = ROI_COLOR_LUT[i];
-      const x = item[0] as number;
-      const rgb = item[1];
-      if (Array.isArray(rgb)) {
-        lookupTable.addRGBPoint(x, rgb[0] / 255, rgb[1] / 255, rgb[2] / 255);
-      }
-    }
     mapper.setLookupTable(lookupTable);
+    const scalars = image.getPointData().getScalars();
+    const dataRange = [].concat(scalars ? scalars.getRange() : [0, 1]);
+
+    // --------------------------------------------------------------------
+    // Color handling
+    // --------------------------------------------------------------------
+
+    const preset = vtkColorMaps.getPresetByName('erdc_rainbow_bright');
+    lookupTable.applyColorMap(preset);
+    lookupTable.setMappingRange(dataRange[0], dataRange[1]);
+    lookupTable.updateRange();
+    actor.getProperty().set({ representation: 1 });
 
     actor.setMapper(mapper);
-    actor.getProperty().setRepresentation(1);
-
+    mapper.setInputData(image);
+    let scalarBarActor = vtkScalarBarActor.newInstance();
+    obj.renderer.addActor(scalarBarActor);
+    scalarBarActor.setAxisLabel('(p) Normals');
     obj.renderer.addActor(actor);
-    obj.renderer.getActiveCamera().set({ position: [1, 1, 0], viewUp: [0, 0, -1] });
+
     obj.renderer.resetCamera();
     obj.renderWindow.render();
   };
@@ -85,7 +81,12 @@ const VolumeContour = ({ volume }: any) => {
     if (sliceRef.current) setup(sliceRef);
   }, [volume]);
 
-  return <div ref={sliceRef} />;
+  return (
+    <>
+      <ControlBar />
+      <div ref={sliceRef} />
+    </>
+  );
 };
 
-export { VolumeContour };
+export { GeometryView };

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { DataImport, VolumeContour } from '../../src/components';
+import { DataImport, VolumeView } from '../../src/components';
 
-export default function VolumeContourFixture() {
+export default function VolumeViewFixture() {
   const [volume, setVolume] = useState(null);
 
   const callbackData = (data: any) => {
@@ -11,7 +11,7 @@ export default function VolumeContourFixture() {
   return (
     <>
       <DataImport callback={callbackData} />
-      {volume && <VolumeContour volume={volume} />}
+      {volume && <VolumeView volume={volume} />}
     </>
   );
 }
