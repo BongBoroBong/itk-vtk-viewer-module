@@ -32,14 +32,14 @@ const ControlBar = () => {
         onChange={(event) => setRepresentation(+event.target.value)}
       >
         {['Hidden', 'Points', 'Wireframe', 'Surface', 'Surface with Edge'].map((name, idx) => (
-          <option key={`representation_${idx}`} value={idx} selected={idx === representation}>
+          <option key={`representation_${idx}`} value={idx}>
             {name}
           </option>
         ))}
       </S.Select>
       <S.Select defaultValue={lutName} onChange={(event) => setLutName(event.target.value)}>
         {vtkColorMaps.rgbPresetNames.map((name: string, idx: number) => (
-          <option key={`lut_${idx}`} value={name} selected={lutName === name}>
+          <option key={`lut_${idx}`} value={name}>
             {name}
           </option>
         ))}

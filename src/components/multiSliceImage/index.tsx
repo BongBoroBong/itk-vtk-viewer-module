@@ -28,49 +28,52 @@ const MultiSliceImage = ({ volume }: any) => {
   const [sliceJ, setSliceJ] = useState(120);
 
   const setup = (refs: any) => {
-    grw.setContainer(refs.current);
-    grw.resize();
+    if (Array.isArray(volume.image)) {
+      grw.setContainer(refs.current);
+      grw.resize();
 
-    let direction = {
-      rows: 3,
-      columns: 3,
-      data: [1, 0, 0, 0, 1, 0, 0, 0, 1],
-    };
+      obj.renderWindow.addRenderer(obj.renderer);
+      obj.renderWindow.addView(obj.GLWindow);
 
-    let centerImage = { ...volume.image, direction };
+      let direction = {
+        rows: 3,
+        columns: 3,
+        data: [1, 0, 0, 0, 1, 0, 0, 0, 1],
+      };
 
-    const image = convertItkToVtkImage(centerImage);
+      for (let i = 0; i < volume.image.length; i++) {
+        let centerImage = { ...volume.image[i], direction };
+        const image = convertItkToVtkImage(centerImage);
 
-    obj.renderWindow.addRenderer(obj.renderer);
-    obj.renderWindow.addView(obj.GLWindow);
+        const imageActorI = vtkImageSlice.newInstance();
+        const imageActorJ = vtkImageSlice.newInstance();
+        const imageActorK = vtkImageSlice.newInstance();
 
-    const imageActorI = vtkImageSlice.newInstance();
-    const imageActorJ = vtkImageSlice.newInstance();
-    const imageActorK = vtkImageSlice.newInstance();
+        obj.renderer.addActor(imageActorK);
+        obj.renderer.addActor(imageActorJ);
+        obj.renderer.addActor(imageActorI);
 
-    obj.renderer.addActor(imageActorK);
-    obj.renderer.addActor(imageActorJ);
-    obj.renderer.addActor(imageActorI);
+        const imageMapperK = vtkImageMapper.newInstance();
+        imageMapperK.setInputData(image);
+        imageMapperK.setKSlice(sliceK);
+        // @ts-ignore
+        imageActorK.setMapper(imageMapperK);
+        const imageMapperJ = vtkImageMapper.newInstance();
+        imageMapperJ.setInputData(image);
+        imageMapperJ.setJSlice(sliceJ);
+        // @ts-ignore
+        imageActorJ.setMapper(imageMapperJ);
+        const imageMapperI = vtkImageMapper.newInstance();
+        imageMapperI.setInputData(image);
+        imageMapperI.setISlice(sliceI);
+        // @ts-ignore
+        imageActorI.setMapper(imageMapperI);
 
-    const imageMapperK = vtkImageMapper.newInstance();
-    imageMapperK.setInputData(image);
-    imageMapperK.setKSlice(sliceK);
-    // @ts-ignore
-    imageActorK.setMapper(imageMapperK);
-    const imageMapperJ = vtkImageMapper.newInstance();
-    imageMapperJ.setInputData(image);
-    imageMapperJ.setJSlice(sliceJ);
-    // @ts-ignore
-    imageActorJ.setMapper(imageMapperJ);
-    const imageMapperI = vtkImageMapper.newInstance();
-    imageMapperI.setInputData(image);
-    imageMapperI.setISlice(sliceI);
-    // @ts-ignore
-    imageActorI.setMapper(imageMapperI);
-
-    obj.renderer.resetCamera();
-    obj.renderer.resetCameraClippingRange();
-    obj.renderWindow.render();
+        obj.renderer.resetCamera();
+        obj.renderer.resetCameraClippingRange();
+        obj.renderWindow.render();
+      }
+    }
   };
 
   useEffect(() => {

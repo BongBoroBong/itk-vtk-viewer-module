@@ -71,6 +71,10 @@ module.exports = {
           from: path.join(itkSource, 'PolyDataIOs'),
           to: path.join(itkDestination, 'PolyDataIOs'),
         },
+        {
+          from: path.join(itkSource, 'Pipelines'),
+          to: path.join(itkDestination, 'Pipelines'),
+        },
       ],
     }),
   ].filter(Boolean),

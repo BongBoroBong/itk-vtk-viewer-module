@@ -12,12 +12,14 @@ import { readAsArrayBuffer } from 'promise-file-reader';
 import vtkXMLImageDataReader from '@kitware/vtk.js/IO/XML/XMLImageDataReader';
 import vtkITKHelper from '@kitware/vtk.js/Common/DataModel/ITKHelper';
 import vtk from '@kitware/vtk.js/vtk';
+import vtkXMLPolyDataReader from '@kitware/vtk.js/IO/XML/XMLPolyDataReader';
 
 interface DataimportProps {
   callback: (data: any) => void;
+  accept?: string;
 }
 
-const DataImport = ({ callback }: DataimportProps) => {
+const DataImport = ({ callback, accept = '.dcm, .nii, .vtp' }: DataimportProps) => {
   const dcmFileUploader = useRef<HTMLInputElement | null>(null);
 
   const readFiles = async (files: FileList) => {
@@ -38,6 +40,17 @@ const DataImport = ({ callback }: DataimportProps) => {
             const itkImage = vtkITKHelper.convertVtkToItkImage(vtkImage);
             return Promise.resolve({
               data: itkImage,
+              vtkImage: vtkImage,
+            });
+          });
+        } else if (extension === 'vtp') {
+          return readAsArrayBuffer(file).then((fileContents) => {
+            const vtpReader = vtkXMLPolyDataReader.newInstance();
+            vtpReader.parseAsArrayBuffer(fileContents);
+            const vtkImage = vtpReader.getOutputData(0);
+            return Promise.resolve({
+              data: vtkImage,
+              vtkImage: vtkImage,
             });
           });
         } else if (extensionToPolyDataIO.has(extension)) {
@@ -83,8 +96,9 @@ const DataImport = ({ callback }: DataimportProps) => {
       const images = dataSets
         .filter(({ data }) => !!data && data.imageType !== undefined)
         .map(({ data }) => data);
+
       return {
-        image: images[0],
+        image: images,
       };
     }
   };
@@ -111,7 +125,7 @@ const DataImport = ({ callback }: DataimportProps) => {
         type="file"
         id="dicom-file-uploader"
         style={{ display: 'none' }}
-        accept=".dcm,.nii"
+        accept={accept}
         multiple
         onChange={handleChange}
       />
