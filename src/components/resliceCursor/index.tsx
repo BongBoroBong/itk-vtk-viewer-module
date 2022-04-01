@@ -23,7 +23,7 @@ const ResliceCursor = ({ volume }: any) => {
       data: [1, 0, 0, 0, 1, 0, 0, 0, 1],
     };
 
-    let centerImage = { ...volume.image, direction };
+    let centerImage = { ...volume.image[0], direction };
 
     const image = convertItkToVtkImage(centerImage);
 

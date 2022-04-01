@@ -27,7 +27,7 @@ const DataImport = ({ callback, accept = '.dcm, .nii, .vtp' }: DataimportProps) 
       const { image: itkImage } = await readImageDICOMFileSeries(files);
       itkImage.name = files[0].name;
       return {
-        image: itkImage,
+        image: [itkImage],
       };
     } catch (error) {
       const readers = Array.from(files).map(async (file) => {

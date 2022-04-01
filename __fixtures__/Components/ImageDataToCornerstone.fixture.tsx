@@ -5,12 +5,13 @@ export default function ImageDataToCornerstoneFixture() {
   const [volume, setVolume] = useState(null);
 
   const callbackData = (data: any) => {
+    console.log('data', data);
     setVolume(data);
   };
 
   return (
     <>
-      <DataImport accept={'.nii'} callback={callbackData} />
+      <DataImport accept={'.ima, .nii, .dcm'} callback={callbackData} />
       {volume && <ImageDataToCornerstone volume={volume} />}
     </>
   );

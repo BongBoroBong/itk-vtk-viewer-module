@@ -28,7 +28,7 @@ const { convertItkToVtkImage } = ITKHelper;
 import '@kitware/vtk.js/IO/Core/DataAccessHelper/HttpDataAccessHelper';
 import vtkColorTransferFunction from '@kitware/vtk.js/Rendering/Core/ColorTransferFunction';
 import vtkImageProperty from '@kitware/vtk.js/Rendering/Core/ImageProperty';
-import { ATROPHY_ROI_COLOR_LUT } from '../../utils/mock';
+import { ROI_COLOR_LUT } from '../../variables/mock';
 
 const StyledSectionView = styled.section`
   display: grid;
@@ -123,8 +123,8 @@ const ResliceCursorWidget = ({ volume, volume2, volume3 }: any) => {
 
       if (type === 'reslice2') {
         const cfun = vtkColorTransferFunction.newInstance();
-        for (let i = 0; i < ATROPHY_ROI_COLOR_LUT.length; i++) {
-          const item = ATROPHY_ROI_COLOR_LUT[i];
+        for (let i = 0; i < ROI_COLOR_LUT.length; i++) {
+          const item = ROI_COLOR_LUT[i];
           const x = item[0] as number;
           const rgb = item[1];
           if (Array.isArray(rgb)) {

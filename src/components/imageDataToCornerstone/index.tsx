@@ -1,26 +1,28 @@
 import React, { useEffect, useRef } from 'react';
 
-import vtkImageDataToCornerstone from '@kitware/vtk.js/Filters/Cornerstone/ImageDataToCornerstoneImage';
-import ITKHelper from '@kitware/vtk.js/Common/DataModel/ITKHelper';
+import vtkImageDataToCornerstoneImage from '@kitware/vtk.js/Filters/Cornerstone/ImageDataToCornerstoneImage';
+import { setInitializeViewer } from '../../utils/common';
 
-const { convertItkToVtkImage } = ITKHelper;
 const ImageDataToCornerstone = ({ volume }: any) => {
   const sliceRef = useRef<HTMLDivElement>(null);
 
-  const setup = (refs: any) => {
-    if (Array.isArray(volume.image)) {
-      const cornerstoneData = vtkImageDataToCornerstone.newInstance();
+  const setup = () => {
+    const { objs, images } = setInitializeViewer(sliceRef, volume);
 
-      for (let i = 0; i < volume.image.length; i++) {
-        const image = convertItkToVtkImage(volume.image[i]);
-        cornerstoneData.setInputData(image);
-        console.log('cornerstoneData', cornerstoneData.getInputData());
-      }
+    if (objs.length > 0 && images.length > 0) {
+      objs.forEach(() => {
+        images.forEach((image) => {
+          const cornerstoneData = vtkImageDataToCornerstoneImage.newInstance();
+          cornerstoneData.setInputData(image);
+          console.log('cornerstoneData', cornerstoneData.getInputData());
+          console.log('aaa', cornerstoneData.get('imageId'));
+        });
+      });
     }
   };
 
   useEffect(() => {
-    if (sliceRef.current) setup(sliceRef);
+    if (sliceRef.current) setup();
   }, [volume]);
 
   return <div ref={sliceRef} />;

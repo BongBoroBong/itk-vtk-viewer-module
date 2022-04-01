@@ -12,7 +12,7 @@ import vtkColorTransferFunction from '@kitware/vtk.js/Rendering/Core/ColorTransf
 import vtkPiecewiseFunction from '@kitware/vtk.js/Common/DataModel/PiecewiseFunction';
 
 import ITKHelper from '@kitware/vtk.js/Common/DataModel/ITKHelper';
-import { ATROPHY_ROI_COLOR_LUT } from '../../utils/mock';
+import { ROI_COLOR_LUT } from '../../variables/mock';
 const { convertItkToVtkImage } = ITKHelper;
 
 const VolumeOutline = ({ volume }: any) => {
@@ -52,8 +52,8 @@ const VolumeOutline = ({ volume }: any) => {
       labelMap.actor.setMapper(labelMap.mapper);
 
       // Set up labelMap color and opacity mapping
-      for (let i = 0; i < ATROPHY_ROI_COLOR_LUT.length; i++) {
-        const item = ATROPHY_ROI_COLOR_LUT[i];
+      for (let i = 0; i < ROI_COLOR_LUT.length; i++) {
+        const item = ROI_COLOR_LUT[i];
         const x = item[0] as number;
         const rgb = item[1];
         if (Array.isArray(rgb)) {

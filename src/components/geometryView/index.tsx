@@ -7,27 +7,24 @@ import '@kitware/vtk.js/IO/Core/DataAccessHelper/HttpDataAccessHelper';
 import '@kitware/vtk.js/IO/Core/DataAccessHelper/JSZipDataAccessHelper';
 
 import { debounce } from '@kitware/vtk.js/macros';
-import vtkGenericRenderWindow from '@kitware/vtk.js/Rendering/Misc/GenericRenderWindow';
 import ITKHelper from '@kitware/vtk.js/Common/DataModel/ITKHelper';
 import vtkActor from '@kitware/vtk.js/Rendering/Core/Actor';
 import vtkMapper from '@kitware/vtk.js/Rendering/Core/Mapper';
 import vtkScalarBarActor from '@kitware/vtk.js/Rendering/Core/ScalarBarActor';
 import vtkColorMaps from '@kitware/vtk.js/Rendering/Core/ColorTransferFunction/ColorMaps';
 import vtkColorTransferFunction from '@kitware/vtk.js/Rendering/Core/ColorTransferFunction';
+import vtkGenericRenderWindow from '@kitware/vtk.js/Rendering/Misc/GenericRenderWindow';
 
 import { ColorMode, ScalarMode } from '@kitware/vtk.js/Rendering/Core/Mapper/Constants';
-
-import { ControlBar } from './controlBar';
-
 const { convertItkToVtkImage } = ITKHelper;
 
 const GeometryView = ({ volume }: any) => {
   const sliceRef = useRef<HTMLDivElement>(null);
 
-  const setup = (refs: any) => {
+  const setup = (ref: any) => {
     if (Array.isArray(volume.image)) {
       const grw = vtkGenericRenderWindow.newInstance();
-      grw.setContainer(refs.current);
+      if (sliceRef.current) grw.setContainer(ref.current);
       grw.resize();
 
       let direction = {
@@ -45,7 +42,7 @@ const GeometryView = ({ volume }: any) => {
       obj.renderWindow.addView(obj.GLWindow);
       obj.interactor.setView(obj.GLWindow);
       obj.interactor.initialize();
-      obj.interactor.bindEvents(refs.current);
+      obj.interactor.bindEvents(ref.current);
 
       let scalarBarActor = vtkScalarBarActor.newInstance();
       obj.renderer.addActor(scalarBarActor);
@@ -114,12 +111,7 @@ const GeometryView = ({ volume }: any) => {
     if (sliceRef.current) setup(sliceRef);
   }, [volume]);
 
-  return (
-    <>
-      <ControlBar />
-      <div ref={sliceRef} />
-    </>
-  );
+  return <div ref={sliceRef} />;
 };
 
 export { GeometryView };
