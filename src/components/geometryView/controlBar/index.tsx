@@ -51,7 +51,6 @@ const ControlBar = () => {
         min="1"
         onChange={(event) => setOpacity(+event.target.value)}
       />
-      <S.Button>Start AR</S.Button>
     </S.Container>
   );
 };

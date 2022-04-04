@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@kitware/vtk.js": "^22.5.2",
+    "@kitware/vtk.js": "^24.0.3",
     "itk": "^14.1.1",
     "promise-file-reader": "^1.0.3",
     "react": "^17.0.2",
@@ -17,7 +17,7 @@
   "peerDependencies": {
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "@kitware/vtk.js": "^22.5.2",
+    "@kitware/vtk.js": "^24.0.3",
     "itk": "^14.1.1"
   },
   "devDependencies": {
@@ -40,7 +40,8 @@
   "scripts": {
     "lintfix": "eslint --fix ./src --ext .ts,.tsx",
     "pretty": "prettier --write ./src",
-    "cosmos": "cosmos"
+    "cosmos": "cosmos",
+    "patch": "node .\\patch\\script.js"
   },
   "eslintConfig": {
     "extends": [

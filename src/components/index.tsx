@@ -1,5 +1,6 @@
 export * from './cone';
 export * from './dataimport';
+export * from './geometry';
 export * from './geometryView';
 export * from './imageDataToCornerstone';
 export * from './interactorStyleMPRSlice';

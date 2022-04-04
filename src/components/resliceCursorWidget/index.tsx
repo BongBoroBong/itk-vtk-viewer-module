@@ -91,197 +91,197 @@ const ResliceCursorWidget = ({ volume, volume2, volume3 }: any) => {
   }
 
   const setup = (refs: any) => {
-    const setItkImage = (image: any) => {
-      const direction = {
-        rows: 3,
-        columns: 3,
-        data: [1, 0, 0, 0, 1, 0, 0, 0, 1],
-      };
-
-      if (!image) return {};
-      return convertItkToVtkImage({ ...image.image, direction });
-    };
-
-    const createReslice = (obj: any, type: 'reslice' | 'reslice2' | 'reslice3') => {
-      obj[type] = vtkImageReslice.newInstance();
-      obj[type].setSlabMode(SlabMode.MEAN);
-      obj[type].setSlabNumberOfSlices(1);
-      obj[type].setTransformInputSampling(false);
-      obj[type].setAutoCropOutput(false);
-      obj[type].setOutputDimensionality(2);
-
-      obj[`${type}Mapper`] = vtkImageMapper.newInstance();
-      obj[`${type}Actor`] = vtkImageSlice.newInstance({
-        property: vtkImageProperty.newInstance({
-          independentComponents: false,
-          ambient: 1.0,
-          diffuse: 0.0,
-          opacity: 0.8,
-        }),
-      });
-      obj[`${type}Actor`].getProperty().setOpacity(0.2);
-
-      if (type === 'reslice2') {
-        const cfun = vtkColorTransferFunction.newInstance();
-        for (let i = 0; i < ROI_COLOR_LUT.length; i++) {
-          const item = ROI_COLOR_LUT[i];
-          const x = item[0] as number;
-          const rgb = item[1];
-          if (Array.isArray(rgb)) {
-            cfun.addRGBPoint(x, rgb[0] / 255, rgb[1] / 255, rgb[2] / 255);
-          }
-        }
-        obj[`${type}Actor`].getProperty().setRGBTransferFunction(0, cfun);
-        obj[`${type}Actor`].getProperty().setInterpolationTypeToNearest();
-        obj[`${type}Actor`].getProperty().setOpacity(0.6);
-      }
-
-      obj[`${type}Actor`].setMapper(obj[`${type}Mapper`]);
-      obj[`${type}Mapper`].setInputConnection(obj[type].getOutputPort());
-    };
-
-    const widgetState = widget.getWidgetState();
-    widgetState.setKeepOrthogonality(true);
-    widgetState.setOpacity(0.6);
-    widgetState.setSphereRadius(10);
-    widgetState.setLineThickness(5);
-
-    const image = setItkImage(volume);
-    const image2 = setItkImage(volume2);
-    const image3 = setItkImage(volume3);
-
-    widget.setImage(image);
-
-    for (let i = 0; i < 4; i++) {
-      const grw = vtkGenericRenderWindow.newInstance();
-      grw.setContainer(refs[i].current);
-      grw.resize();
-
-      const obj: any = {
-        renderWindow: grw.getRenderWindow(),
-        renderer: grw.getRenderer(),
-        GLWindow: grw.getOpenGLRenderWindow(),
-        interactor: grw.getInteractor(),
-        widgetManager: vtkWidgetManager.newInstance(),
-      };
-
-      obj.renderer.getActiveCamera().setParallelProjection(true);
-      obj.renderWindow.addRenderer(obj.renderer);
-      obj.renderWindow.addView(obj.GLWindow);
-      obj.renderWindow.setInteractor(obj.interactor);
-      obj.interactor.setView(obj.GLWindow);
-      obj.interactor.initialize();
-      obj.interactor.bindEvents(refs[i].current);
-      obj.widgetManager.setRenderer(obj.renderer);
-
-      if (i < 3) {
-        obj.interactor.setInteractorStyle(vtkInteractorStyleImage.newInstance());
-        obj.widgetInstance = obj.widgetManager.addWidget(widget, xyzToViewType[i]);
-        obj.widgetInstance.setScaleInPixels(true);
-        obj.widgetInstance.setRotationHandlePosition(0.75);
-        obj.widgetManager.enablePicking();
-        // Use to update all renderers buffer when actors are moved
-        obj.widgetManager.setCaptureOn(CaptureOn.MOUSE_MOVE);
-      } else {
-        obj.interactor.setInteractorStyle(vtkInteractorStyleTrackballCamera.newInstance());
-      }
-
-      createReslice(obj, 'reslice');
-      createReslice(obj, 'reslice2');
-      createReslice(obj, 'reslice3');
-
-      obj.sphereActors = [];
-      obj.sphereSources = [];
-
-      for (let j = 0; j < 3; j++) {
-        const sphere = vtkSphereSource.newInstance();
-        sphere.setRadius(10);
-        const mapper = vtkMapper.newInstance();
-        mapper.setInputConnection(sphere.getOutputPort());
-        const actor = vtkActor.newInstance();
-        actor.setMapper(mapper);
-        obj.sphereActors.push(actor);
-        obj.sphereSources.push(sphere);
-      }
-
-      if (i < 3) {
-        viewAttributes.push(obj);
-      } else {
-        view3D = obj;
-      }
-
-      // Create image outline in 3D view
-      const outline: any = vtkOutlineFilter.newInstance();
-      outline.setInputData(image);
-      const outlineMapper = vtkMapper.newInstance();
-      outlineMapper.setInputData(outline.getOutputData());
-      const outlineActor = vtkActor.newInstance();
-      outlineActor.setMapper(outlineMapper);
-
-      view3D && view3D.renderer.addActor(outlineActor);
-
-      viewAttributes.forEach((objItem, i) => {
-        objItem.reslice.setInputData(image);
-        objItem.reslice2.setInputData(image2);
-        objItem.reslice3.setInputData(image3);
-        objItem.renderer.addActor(objItem.resliceActor);
-        objItem.renderer.addActor(objItem.reslice2Actor);
-        objItem.renderer.addActor(objItem.reslice3Actor);
-        view3D && view3D.renderer.addActor(objItem.resliceActor);
-        view3D && view3D.renderer.addActor(objItem.reslice2Actor);
-        view3D && view3D.renderer.addActor(objItem.reslice3Actor);
-        objItem.sphereActors.forEach((actor: any) => {
-          objItem.renderer.addActor(actor);
-          view3D && view3D.renderer.addActor(actor);
-        });
-
-        const viewType = xyzToViewType[i];
-
-        viewAttributes.forEach((v) => {
-          v.widgetInstance.onInteractionEvent(
-            ({ computeFocalPointOffset, canUpdateFocalPoint }: any) => {
-              const activeViewType = widget.getWidgetState().getActiveViewType();
-              const keepFocalPointPosition = activeViewType !== viewType && canUpdateFocalPoint;
-              updateReslice({
-                viewType,
-                reslice: objItem.reslice,
-                actor: objItem.resliceActor,
-                reslice2: objItem.reslice2,
-                actor2: objItem.reslice2Actor,
-                reslice3: objItem.reslice3,
-                actor3: objItem.reslice3Actor,
-                renderer: objItem.renderer,
-                resetFocalPoint: false,
-                keepFocalPointPosition,
-                computeFocalPointOffset,
-                sphereSources: objItem.sphereSources,
-              });
-            },
-          );
-        });
-
-        updateReslice({
-          viewType,
-          reslice: objItem.reslice,
-          actor: objItem.resliceActor,
-          reslice2: objItem.reslice2,
-          actor2: objItem.reslice2Actor,
-          reslice3: objItem.reslice3,
-          actor3: objItem.reslice3Actor,
-          renderer: objItem.renderer,
-          resetFocalPoint: true, // At first initilization, center the focal point to the image center
-          keepFocalPointPosition: false, // Don't update the focal point as we already set it to the center of the image
-          computeFocalPointOffset: true, // Allow to compute the current offset between display reslice center and display focal point
-          sphereSources: objItem.sphereSources,
-        });
-        objItem.renderWindow.render();
-      });
-
-      if (view3D) {
-        view3D.renderer.resetCamera();
-        view3D.renderer.resetCameraClippingRange();
-      }
-    }
+    // const setItkImage = (image: any) => {
+    //   const direction = {
+    //     rows: 3,
+    //     columns: 3,
+    //     data: [1, 0, 0, 0, 1, 0, 0, 0, 1],
+    //   };
+    //
+    //   if (!image) return {};
+    //   return convertItkToVtkImage({ ...image.image, direction });
+    // };
+    //
+    // const createReslice = (obj: any, type: 'reslice' | 'reslice2' | 'reslice3') => {
+    //   obj[type] = vtkImageReslice.newInstance();
+    //   obj[type].setSlabMode(SlabMode.MEAN);
+    //   obj[type].setSlabNumberOfSlices(1);
+    //   obj[type].setTransformInputSampling(false);
+    //   obj[type].setAutoCropOutput(false);
+    //   obj[type].setOutputDimensionality(2);
+    //
+    //   obj[`${type}Mapper`] = vtkImageMapper.newInstance();
+    //   obj[`${type}Actor`] = vtkImageSlice.newInstance({
+    //     property: vtkImageProperty.newInstance({
+    //       independentComponents: false,
+    //       ambient: 1.0,
+    //       diffuse: 0.0,
+    //       opacity: 0.8,
+    //     }),
+    //   });
+    //   obj[`${type}Actor`].getProperty().setOpacity(0.2);
+    //
+    //   if (type === 'reslice2') {
+    //     const cfun = vtkColorTransferFunction.newInstance();
+    //     for (let i = 0; i < ROI_COLOR_LUT.length; i++) {
+    //       const item = ROI_COLOR_LUT[i];
+    //       const x = item[0] as number;
+    //       const rgb = item[1];
+    //       if (Array.isArray(rgb)) {
+    //         cfun.addRGBPoint(x, rgb[0] / 255, rgb[1] / 255, rgb[2] / 255);
+    //       }
+    //     }
+    //     obj[`${type}Actor`].getProperty().setRGBTransferFunction(0, cfun);
+    //     obj[`${type}Actor`].getProperty().setInterpolationTypeToNearest();
+    //     obj[`${type}Actor`].getProperty().setOpacity(0.6);
+    //   }
+    //
+    //   obj[`${type}Actor`].setMapper(obj[`${type}Mapper`]);
+    //   obj[`${type}Mapper`].setInputConnection(obj[type].getOutputPort());
+    // };
+    //
+    // const widgetState = widget.getWidgetState();
+    // widgetState.setKeepOrthogonality(true);
+    // widgetState.setOpacity(0.6);
+    // widgetState.setSphereRadius(10);
+    // widgetState.setLineThickness(5);
+    //
+    // const image = setItkImage(volume);
+    // const image2 = setItkImage(volume2);
+    // const image3 = setItkImage(volume3);
+    //
+    // widget.setImage(image);
+    //
+    // for (let i = 0; i < 4; i++) {
+    //   const grw = vtkGenericRenderWindow.newInstance();
+    //   grw.setContainer(refs[i].current);
+    //   grw.resize();
+    //
+    //   const obj: any = {
+    //     renderWindow: grw.getRenderWindow(),
+    //     renderer: grw.getRenderer(),
+    //     GLWindow: grw.getOpenGLRenderWindow(),
+    //     interactor: grw.getInteractor(),
+    //     widgetManager: vtkWidgetManager.newInstance(),
+    //   };
+    //
+    //   obj.renderer.getActiveCamera().setParallelProjection(true);
+    //   obj.renderWindow.addRenderer(obj.renderer);
+    //   obj.renderWindow.addView(obj.GLWindow);
+    //   obj.renderWindow.setInteractor(obj.interactor);
+    //   obj.interactor.setView(obj.GLWindow);
+    //   obj.interactor.initialize();
+    //   obj.interactor.bindEvents(refs[i].current);
+    //   obj.widgetManager.setRenderer(obj.renderer);
+    //
+    //   if (i < 3) {
+    //     obj.interactor.setInteractorStyle(vtkInteractorStyleImage.newInstance());
+    //     obj.widgetInstance = obj.widgetManager.addWidget(widget, xyzToViewType[i]);
+    //     obj.widgetInstance.setScaleInPixels(true);
+    //     obj.widgetInstance.setRotationHandlePosition(0.75);
+    //     obj.widgetManager.enablePicking();
+    //     // Use to update all renderers buffer when actors are moved
+    //     obj.widgetManager.setCaptureOn(CaptureOn.MOUSE_MOVE);
+    //   } else {
+    //     obj.interactor.setInteractorStyle(vtkInteractorStyleTrackballCamera.newInstance());
+    //   }
+    //
+    //   createReslice(obj, 'reslice');
+    //   createReslice(obj, 'reslice2');
+    //   createReslice(obj, 'reslice3');
+    //
+    //   obj.sphereActors = [];
+    //   obj.sphereSources = [];
+    //
+    //   for (let j = 0; j < 3; j++) {
+    //     const sphere = vtkSphereSource.newInstance();
+    //     sphere.setRadius(10);
+    //     const mapper = vtkMapper.newInstance();
+    //     mapper.setInputConnection(sphere.getOutputPort());
+    //     const actor = vtkActor.newInstance();
+    //     actor.setMapper(mapper);
+    //     obj.sphereActors.push(actor);
+    //     obj.sphereSources.push(sphere);
+    //   }
+    //
+    //   if (i < 3) {
+    //     viewAttributes.push(obj);
+    //   } else {
+    //     view3D = obj;
+    //   }
+    //
+    //   // Create image outline in 3D view
+    //   const outline: any = vtkOutlineFilter.newInstance();
+    //   outline.setInputData(image);
+    //   const outlineMapper = vtkMapper.newInstance();
+    //   outlineMapper.setInputData(outline.getOutputData());
+    //   const outlineActor = vtkActor.newInstance();
+    //   outlineActor.setMapper(outlineMapper);
+    //
+    //   view3D && view3D.renderer.addActor(outlineActor);
+    //
+    //   viewAttributes.forEach((objItem, i) => {
+    //     objItem.reslice.setInputData(image);
+    //     objItem.reslice2.setInputData(image2);
+    //     objItem.reslice3.setInputData(image3);
+    //     objItem.renderer.addActor(objItem.resliceActor);
+    //     objItem.renderer.addActor(objItem.reslice2Actor);
+    //     objItem.renderer.addActor(objItem.reslice3Actor);
+    //     view3D && view3D.renderer.addActor(objItem.resliceActor);
+    //     view3D && view3D.renderer.addActor(objItem.reslice2Actor);
+    //     view3D && view3D.renderer.addActor(objItem.reslice3Actor);
+    //     objItem.sphereActors.forEach((actor: any) => {
+    //       objItem.renderer.addActor(actor);
+    //       view3D && view3D.renderer.addActor(actor);
+    //     });
+    //
+    //     const viewType = xyzToViewType[i];
+    //
+    //     viewAttributes.forEach((v) => {
+    //       v.widgetInstance.onInteractionEvent(
+    //         ({ computeFocalPointOffset, canUpdateFocalPoint }: any) => {
+    //           const activeViewType = widget.getWidgetState().getActiveViewType();
+    //           const keepFocalPointPosition = activeViewType !== viewType && canUpdateFocalPoint;
+    //           updateReslice({
+    //             viewType,
+    //             reslice: objItem.reslice,
+    //             actor: objItem.resliceActor,
+    //             reslice2: objItem.reslice2,
+    //             actor2: objItem.reslice2Actor,
+    //             reslice3: objItem.reslice3,
+    //             actor3: objItem.reslice3Actor,
+    //             renderer: objItem.renderer,
+    //             resetFocalPoint: false,
+    //             keepFocalPointPosition,
+    //             computeFocalPointOffset,
+    //             sphereSources: objItem.sphereSources,
+    //           });
+    //         },
+    //       );
+    //     });
+    //
+    //     updateReslice({
+    //       viewType,
+    //       reslice: objItem.reslice,
+    //       actor: objItem.resliceActor,
+    //       reslice2: objItem.reslice2,
+    //       actor2: objItem.reslice2Actor,
+    //       reslice3: objItem.reslice3,
+    //       actor3: objItem.reslice3Actor,
+    //       renderer: objItem.renderer,
+    //       resetFocalPoint: true, // At first initilization, center the focal point to the image center
+    //       keepFocalPointPosition: false, // Don't update the focal point as we already set it to the center of the image
+    //       computeFocalPointOffset: true, // Allow to compute the current offset between display reslice center and display focal point
+    //       sphereSources: objItem.sphereSources,
+    //     });
+    //     objItem.renderWindow.render();
+    //   });
+    //
+    //   if (view3D) {
+    //     view3D.renderer.resetCamera();
+    //     view3D.renderer.resetCameraClippingRange();
+    //   }
+    // }
   };
 
   useEffect(() => {

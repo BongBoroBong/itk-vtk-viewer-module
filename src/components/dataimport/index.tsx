@@ -47,10 +47,11 @@ const DataImport = ({ callback, accept = '.dcm, .nii, .vtp' }: DataimportProps) 
           return readAsArrayBuffer(file).then((fileContents) => {
             const vtpReader = vtkXMLPolyDataReader.newInstance();
             vtpReader.parseAsArrayBuffer(fileContents);
-            const vtkImage = vtpReader.getOutputData(0);
+            const vtkImage: any = vtpReader.getOutputData(0);
+            const itkImage = vtkITKHelper.convertVtkToItkPolyData(vtkImage);
+
             return Promise.resolve({
-              data: vtkImage,
-              vtkImage: vtkImage,
+              data: itkImage,
             });
           });
         } else if (extensionToPolyDataIO.has(extension)) {
@@ -93,8 +94,11 @@ const DataImport = ({ callback, accept = '.dcm, .nii, .vtp' }: DataimportProps) 
         return { data: itkImage };
       });
       const dataSets = await Promise.all(readers);
+
       const images = dataSets
-        .filter(({ data }) => !!data && data.imageType !== undefined)
+        .filter(
+          ({ data }) => !!data && (data.imageType !== undefined || data.polyDataType !== undefined),
+        )
         .map(({ data }) => data);
 
       return {

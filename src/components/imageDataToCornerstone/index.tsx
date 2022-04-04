@@ -11,11 +11,10 @@ const ImageDataToCornerstone = ({ volume }: any) => {
 
     if (objs.length > 0 && images.length > 0) {
       objs.forEach(() => {
-        images.forEach((image) => {
+        images.forEach(async (image) => {
           const cornerstoneData = vtkImageDataToCornerstoneImage.newInstance();
           cornerstoneData.setInputData(image);
-          console.log('cornerstoneData', cornerstoneData.getInputData());
-          console.log('aaa', cornerstoneData.get('imageId'));
+          console.log('cornerstoneData', cornerstoneData.getOutputData());
         });
       });
     }
